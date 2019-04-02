@@ -6,11 +6,11 @@ import { CoreModule } from '@app/core';
 import { SharedModule } from '@app/shared';
 import { HomeRoutingModule } from './home-routing.module';
 import { HomeComponent } from './home.component';
-import { QuoteService } from './quote.service';
+import { GameOfLifeComponent } from './game-of-life/game-of-life.component';
 
 @NgModule({
   imports: [CommonModule, TranslateModule, CoreModule, SharedModule, HomeRoutingModule],
-  declarations: [HomeComponent],
-  providers: [QuoteService]
+  declarations: [HomeComponent, GameOfLifeComponent],
+  providers: []
 })
 export class HomeModule {}
