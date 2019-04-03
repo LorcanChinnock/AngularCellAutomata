@@ -1,19 +1,31 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, Input, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  ViewChild,
+  ElementRef,
+  AfterViewInit,
+  Input,
+  OnDestroy,
+  HostListener,
+  ChangeDetectionStrategy
+} from '@angular/core';
 import { Observable, timer, Subscription } from 'rxjs';
 import { ChanceService } from '@app/shared/services/chanceService/chance.service';
 
 @Component({
   selector: 'app-game-of-life',
   templateUrl: './game-of-life.component.html',
-  styleUrls: ['./game-of-life.component.scss']
+  styleUrls: ['./game-of-life.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GameOfLifeComponent implements AfterViewInit, OnDestroy {
   @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
 
-  @Input() public size = 800;
   @Input() public numberOfTiles = 100;
-  @Input() public speedInMilliseconds = 10;
+  @Input() public speedInMilliseconds = 50;
   @Input() public aliveStartPercentage = 10;
+
+  private screenHeight: number;
+  private screenWidth: number;
 
   private cellSize: number;
 
@@ -25,8 +37,15 @@ export class GameOfLifeComponent implements AfterViewInit, OnDestroy {
   private timerSubscription: Subscription;
 
   constructor(private chanceService: ChanceService) {
-    this.cellSize = this.size / this.numberOfTiles;
+    this.onResize();
+    this.calculateCellSize();
     this.currentState = this.create2dArray();
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize(_?: Event) {
+    this.screenHeight = window.innerHeight - 80;
+    this.screenWidth = window.innerWidth;
   }
 
   ngAfterViewInit(): void {
@@ -39,6 +58,10 @@ export class GameOfLifeComponent implements AfterViewInit, OnDestroy {
     this.timerSubscription.unsubscribe();
   }
 
+  private calculateCellSize() {
+    this.cellSize = this.getMinScreenDimension() / this.numberOfTiles;
+  }
+
   private create2dArray() {
     const board = Array();
     for (let i = 0; i < this.numberOfTiles; i++) {
@@ -49,8 +72,12 @@ export class GameOfLifeComponent implements AfterViewInit, OnDestroy {
 
   private setupCanvas() {
     this.context = this.canvas.nativeElement.getContext('2d');
-    this.context.canvas.height = this.size;
-    this.context.canvas.width = this.size;
+    this.context.canvas.height = this.getMinScreenDimension();
+    this.context.canvas.width = this.getMinScreenDimension();
+  }
+
+  private getMinScreenDimension() {
+    return Math.min(this.screenHeight, this.screenWidth);
   }
 
   private populateGridRandom() {
