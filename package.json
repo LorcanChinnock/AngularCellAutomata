@@ -17,7 +17,9 @@
     "prettier:check": "prettier --list-different \"./{src,e2e}/**/*.{ts,js,scss}\"",
     "postinstall": "npm run prettier -s",
     "precommit": "pretty-quick --staged",
-    "generate": "ng generate"
+    "generate": "ng generate",
+    "buildgithubpages": "ng build --prod --base-href 'https: //lorcanchinnock.github.io/AngularCellAutomata/'",
+    "deploygithubpages": "ngh"
   },
   "dependencies": {
     "@angular/animations": "^7.0.0",
