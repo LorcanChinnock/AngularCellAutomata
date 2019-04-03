@@ -1,32 +1,33 @@
 import { Component, ViewChild, ElementRef, AfterViewInit, Input, OnInit, OnDestroy } from '@angular/core';
 import { Observable, timer, Subscription } from 'rxjs';
+import { ChanceService } from '@app/shared/services/chanceService/chance.service';
 
 @Component({
   selector: 'app-game-of-life',
   templateUrl: './game-of-life.component.html',
   styleUrls: ['./game-of-life.component.scss']
 })
-export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
+export class GameOfLifeComponent implements AfterViewInit, OnDestroy {
   @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
 
   @Input() public size = 800;
   @Input() public numberOfTiles = 200;
   @Input() public speedInMilliseconds = 1;
+  @Input() public aliveStartPercentage = 5;
 
   private cellSize: number;
 
-  private simulationState: number[][];
+  private currentState: number[][];
+  private nextState: number[][];
 
   private context: CanvasRenderingContext2D;
   private timer$: Observable<number> = timer(0, this.speedInMilliseconds);
   private timerSubscription: Subscription;
 
-  constructor() {
+  constructor(private chanceService: ChanceService) {
     this.cellSize = this.size / this.numberOfTiles;
-    this.simulationState = this.create2dArray(this.numberOfTiles);
+    this.currentState = this.create2dArray();
   }
-
-  ngOnInit(): void {}
 
   ngAfterViewInit(): void {
     this.setupCanvas();
@@ -38,9 +39,9 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.timerSubscription.unsubscribe();
   }
 
-  private create2dArray(rows: number) {
+  private create2dArray() {
     const board = Array();
-    for (let i = 0; i < rows; i++) {
+    for (let i = 0; i < this.numberOfTiles; i++) {
       board[i] = Array();
     }
     return board;
@@ -55,48 +56,51 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
   private populateGridRandom() {
     for (let i = 0; i < this.numberOfTiles; i++) {
       for (let j = 0; j < this.numberOfTiles; j++) {
-        this.simulationState[i][j] = this.getOneOrZero();
+        this.currentState[i][j] = this.getOneOrZero();
       }
     }
-    this.setDisplayFromState(this.simulationState);
+    this.setDisplayFromCurrentState();
   }
 
   private getOneOrZero() {
-    return Math.round(Math.random());
+    const deadStartWeight = (100 - this.aliveStartPercentage) / this.aliveStartPercentage;
+    const values = Array<number>(0, 1);
+    const weights = Array<number>(deadStartWeight, 1);
+    return this.chanceService.getWeightedRandom(values, weights);
   }
 
   private updateState() {
-    const nextState = this.simulationState;
+    this.nextState = this.currentState;
     for (let i = 0; i < this.numberOfTiles; i++) {
       for (let j = 0; j < this.numberOfTiles; j++) {
-        this.applySimulationRulesToState(i, j, nextState);
+        this.findNextStateWithRules(i, j);
       }
     }
-    this.simulationState = nextState;
-    this.setDisplayFromState(this.simulationState);
+    this.currentState = this.nextState;
+    this.setDisplayFromCurrentState();
   }
 
-  private applySimulationRulesToState(xPos: number, yPos: number, nextState: number[][]) {
+  private findNextStateWithRules(xPos: number, yPos: number) {
+    const isAlive = this.currentState[xPos][yPos] === 1;
     const currentAmountOfNeighbours = this.getAmountOfNeighbours(xPos, yPos);
-    if (this.simulationState[xPos][yPos] === 0) {
-      if (currentAmountOfNeighbours === 3) {
-        nextState[xPos][yPos] = 1;
+    const shouldDieDueToUnderPopulation = currentAmountOfNeighbours <= 1;
+    const shouldDieDueToOverPopulation = currentAmountOfNeighbours >= 4;
+    const shouldBecomeLive = currentAmountOfNeighbours === 3;
+    if (isAlive) {
+      if (shouldDieDueToUnderPopulation || shouldDieDueToOverPopulation) {
+        this.nextState[xPos][yPos] = 0;
       }
     } else {
-      if (currentAmountOfNeighbours <= 1) {
-        nextState[xPos][yPos] = 0;
-      } else if (currentAmountOfNeighbours >= 4) {
-        nextState[xPos][yPos] = 0;
-      } else if (currentAmountOfNeighbours === 2 || currentAmountOfNeighbours === 3) {
-        nextState[xPos][yPos] = 1;
+      if (shouldBecomeLive) {
+        this.nextState[xPos][yPos] = 1;
       }
     }
   }
 
-  private setDisplayFromState(state: number[][]) {
+  private setDisplayFromCurrentState() {
     for (let i = 0; i < this.numberOfTiles; i++) {
       for (let j = 0; j < this.numberOfTiles; j++) {
-        if (state[i][j] === 1) {
+        if (this.currentState[i][j] === 1) {
           this.setCellToBlack(i, j);
         } else {
           this.clearCell(i, j);
@@ -106,16 +110,16 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private setCellToBlack(i: number, j: number) {
-    const x = i * this.cellSize;
-    const y = j * this.cellSize;
-    this.clearCell(x, y);
-    this.context.fillRect(x, y, this.cellSize, this.cellSize);
+    const cellXPos = i * this.cellSize;
+    const cellYPos = j * this.cellSize;
+    this.clearCell(cellXPos, cellYPos);
+    this.context.fillRect(cellXPos, cellYPos, this.cellSize, this.cellSize);
   }
 
   private clearCell(i: number, j: number) {
-    const x = i * this.cellSize;
-    const y = j * this.cellSize;
-    this.context.clearRect(x, y, this.cellSize, this.cellSize);
+    const cellXPos = i * this.cellSize;
+    const cellYPos = j * this.cellSize;
+    this.context.clearRect(cellXPos, cellYPos, this.cellSize, this.cellSize);
   }
 
   private getAmountOfNeighbours(x: number, y: number) {
@@ -124,13 +128,16 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
       for (let j = -1; j <= 1; j++) {
         const posX = x + i;
         const posY = y + j;
-        if (posX >= 0 && posX < this.numberOfTiles && posY >= 0 && posY < this.numberOfTiles) {
-          amount += this.simulationState[posX][posY];
-        }
-        if (i !== 0 && j !== 0) {
+        const isSelf = i === 0 && j === 0;
+        if (this.isWithinSimulationRange(posX, posY) && !isSelf) {
+          amount += this.currentState[posX][posY];
         }
       }
     }
     return amount;
+  }
+
+  private isWithinSimulationRange(posX: number, posY: number) {
+    return posX >= 0 && posX < this.numberOfTiles && posY >= 0 && posY < this.numberOfTiles;
   }
 }
