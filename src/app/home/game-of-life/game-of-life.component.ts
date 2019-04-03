@@ -11,9 +11,9 @@ export class GameOfLifeComponent implements AfterViewInit, OnDestroy {
   @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
 
   @Input() public size = 800;
-  @Input() public numberOfTiles = 200;
-  @Input() public speedInMilliseconds = 1;
-  @Input() public aliveStartPercentage = 5;
+  @Input() public numberOfTiles = 100;
+  @Input() public speedInMilliseconds = 10;
+  @Input() public aliveStartPercentage = 10;
 
   private cellSize: number;
 
