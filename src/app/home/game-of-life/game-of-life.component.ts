@@ -10,8 +10,8 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
 
   @Input() public size = 800;
-  @Input() public numberOfTiles = 100;
-  @Input() public speedInMilliseconds = 50;
+  @Input() public numberOfTiles = 200;
+  @Input() public speedInMilliseconds = 1;
 
   private cellSize: number;
 
@@ -30,7 +30,6 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.setupCanvas();
-    this.setupStateAsRandom();
     this.populateGridRandom();
     this.timerSubscription = this.timer$.subscribe(_ => this.updateState());
   }
@@ -53,19 +52,13 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.context.canvas.width = this.size;
   }
 
-  private setupStateAsRandom() {}
-
   private populateGridRandom() {
     for (let i = 0; i < this.numberOfTiles; i++) {
       for (let j = 0; j < this.numberOfTiles; j++) {
         this.simulationState[i][j] = this.getOneOrZero();
-        if (this.simulationState[i][j] === 1) {
-          this.fillRectOnCanvas(i, j);
-        } else {
-          this.clearRectOnCanvas(i, j);
-        }
       }
     }
+    this.setDisplayFromState(this.simulationState);
   }
 
   private getOneOrZero() {
@@ -76,50 +69,50 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
     const nextState = this.simulationState;
     for (let i = 0; i < this.numberOfTiles; i++) {
       for (let j = 0; j < this.numberOfTiles; j++) {
-        const amountOfNeighbours = this.getAmountOfNeighbours(i, j);
-        this.updateNextState(i, j, amountOfNeighbours, nextState);
+        this.applySimulationRulesToState(i, j, nextState);
       }
     }
     this.simulationState = nextState;
-    this.setDisplayFromState();
+    this.setDisplayFromState(this.simulationState);
   }
 
-  private setDisplayFromState() {
+  private applySimulationRulesToState(xPos: number, yPos: number, nextState: number[][]) {
+    const currentAmountOfNeighbours = this.getAmountOfNeighbours(xPos, yPos);
+    if (this.simulationState[xPos][yPos] === 0) {
+      if (currentAmountOfNeighbours === 3) {
+        nextState[xPos][yPos] = 1;
+      }
+    } else {
+      if (currentAmountOfNeighbours <= 1) {
+        nextState[xPos][yPos] = 0;
+      } else if (currentAmountOfNeighbours >= 4) {
+        nextState[xPos][yPos] = 0;
+      } else if (currentAmountOfNeighbours === 2 || currentAmountOfNeighbours === 3) {
+        nextState[xPos][yPos] = 1;
+      }
+    }
+  }
+
+  private setDisplayFromState(state: number[][]) {
     for (let i = 0; i < this.numberOfTiles; i++) {
       for (let j = 0; j < this.numberOfTiles; j++) {
-        if (this.simulationState[i][j] === 1) {
-          this.fillRectOnCanvas(i, j);
+        if (state[i][j] === 1) {
+          this.setCellToBlack(i, j);
         } else {
-          this.clearRectOnCanvas(i, j);
+          this.clearCell(i, j);
         }
       }
     }
   }
 
-  private updateNextState(i: number, j: number, amountOfNeighbours: number, nextState: number[][]) {
-    if (this.simulationState[i][j] === 0) {
-      if (amountOfNeighbours === 3) {
-        nextState[i][j] = 1;
-      }
-    } else {
-      if (amountOfNeighbours <= 1) {
-        nextState[i][j] = 0;
-      } else if (amountOfNeighbours >= 4) {
-        nextState[i][j] = 0;
-      } else if (amountOfNeighbours === 2 || amountOfNeighbours === 3) {
-        nextState[i][j] = 1;
-      }
-    }
-  }
-
-  private fillRectOnCanvas(i: number, j: number) {
+  private setCellToBlack(i: number, j: number) {
     const x = i * this.cellSize;
     const y = j * this.cellSize;
-    this.clearRectOnCanvas(x, y);
+    this.clearCell(x, y);
     this.context.fillRect(x, y, this.cellSize, this.cellSize);
   }
 
-  private clearRectOnCanvas(i: number, j: number) {
+  private clearCell(i: number, j: number) {
     const x = i * this.cellSize;
     const y = j * this.cellSize;
     this.context.clearRect(x, y, this.cellSize, this.cellSize);
@@ -127,10 +120,14 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private getAmountOfNeighbours(x: number, y: number) {
     let amount = 0;
-    for (let i = -1; i < 1; i++) {
-      for (let j = -1; j < 1; j++) {
-        if (x + i !== -1 && x + i !== 0) {
-          amount += this.simulationState[x + i][y + j];
+    for (let i = -1; i <= 1; i++) {
+      for (let j = -1; j <= 1; j++) {
+        const posX = x + i;
+        const posY = y + j;
+        if (posX >= 0 && posX < this.numberOfTiles && posY >= 0 && posY < this.numberOfTiles) {
+          amount += this.simulationState[posX][posY];
+        }
+        if (i !== 0 && j !== 0) {
         }
       }
     }
