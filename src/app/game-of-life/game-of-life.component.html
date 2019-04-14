@@ -34,8 +34,16 @@
         <input type="range" class="custom-range config-input" min="1" max="200" id="gridSizeSlider" />
       </div>
       <div class="row control">
-        <label for="speedSlider">Simulation Speed Per Update (Min 1s, Max: 1ms)</label>
-        <input type="range" class="custom-range config-input" min="1" max="1000" id="speedSlider" />
+        <label for="speedSlider">Simulation Speed Per Update (Min 1s, Max: 10ms)</label>
+        <input
+          type="range"
+          class="custom-range config-input"
+          min="10"
+          max="1000"
+          id="speedSlider"
+          [(ngModel)]="speedInMilliseconds"
+          (ngModelChange)="changeSpeed()"
+        />
       </div>
     </div>
   </div>

@@ -4,19 +4,14 @@ import { filter, tap } from 'rxjs/operators';
 export class TurnTimer {
   timer$: Observable<number>;
   timerCounter$ = new Subject<number>();
-  isRunning = false;
+  private isRunning: boolean;
+  private counter: number;
 
-  private counter = 0;
-
-  constructor(stepTime: number, startDelay: number) {
+  constructor(period: number, initialCounter: number = 0, initialIsRunning: boolean = false) {
+    this.counter = initialCounter;
+    this.isRunning = initialIsRunning;
     this.updateCounterStream();
-    this.timer$ = timer(startDelay, stepTime).pipe(
-      filter(_ => this.isRunning === true),
-      tap(_ => {
-        this.counter++;
-        this.updateCounterStream();
-      })
-    );
+    this.timer$ = this.createTimer(period);
   }
 
   reset() {
@@ -31,6 +26,28 @@ export class TurnTimer {
 
   resume() {
     this.isRunning = true;
+  }
+
+  changeSpeed(newPeriod: number) {
+    this.timer$ = this.createTimer(newPeriod);
+  }
+
+  getIsRunning(): boolean {
+    return this.isRunning;
+  }
+
+  getCurrentCounter(): number {
+    return this.counter;
+  }
+
+  private createTimer(period: number): Observable<number> {
+    return timer(period / 2, period).pipe(
+      filter(_ => this.isRunning === true),
+      tap(_ => {
+        this.counter++;
+        this.updateCounterStream();
+      })
+    );
   }
 
   private updateCounterStream() {

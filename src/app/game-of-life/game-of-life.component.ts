@@ -23,11 +23,11 @@ import { TurnTimer } from '@app/shared/services/timer/turn-timer';
 export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
   turnTimer: TurnTimer;
 
-  @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
+  @Input() numberOfTiles = 100;
+  @Input() speedInMilliseconds = 100;
+  @Input() aliveStartPercentage = 10;
 
-  @Input() public numberOfTiles = 100;
-  @Input() public speedInMilliseconds = 100;
-  @Input() public aliveStartPercentage = 10;
+  @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
 
   private screenHeight: number;
   private screenWidth: number;
@@ -37,8 +37,8 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
   private context: CanvasRenderingContext2D;
   private timerSubscription: Subscription;
 
-  constructor(private chanceService: ChanceService, timerService: TimerService) {
-    this.turnTimer = timerService.getTimer(50, 0);
+  constructor(private chanceService: ChanceService, private timerService: TimerService) {
+    this.turnTimer = timerService.getTimer(this.speedInMilliseconds);
     this.onResize();
     this.calculateCellSize();
     this.currentState = this.initialiseStateArray();
@@ -64,13 +64,13 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   start() {
-    if (!this.turnTimer.isRunning) {
+    if (!this.turnTimer.getIsRunning()) {
       this.turnTimer.resume();
     }
   }
 
   togglePause() {
-    if (this.turnTimer.isRunning) {
+    if (this.turnTimer.getIsRunning()) {
       this.turnTimer.pause();
     } else {
       this.turnTimer.resume();
@@ -80,6 +80,14 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
   resetGame() {
     this.turnTimer.reset();
     this.populateGridRandom();
+  }
+
+  changeSpeed() {
+    this.timerSubscription.unsubscribe();
+    const currentCount = this.turnTimer.getCurrentCounter();
+    const currentlyRunning = this.turnTimer.getIsRunning();
+    this.turnTimer = this.timerService.getTimer(this.speedInMilliseconds, currentCount, currentlyRunning);
+    this.timerSubscription = this.turnTimer.timer$.subscribe(_ => this.updateState());
   }
 
   private calculateCellSize() {

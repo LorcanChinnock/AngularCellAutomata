@@ -1,13 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, ChangeDetectorRef } from '@angular/core';
 import { TurnTimer } from './turn-timer';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TimerService {
-  constructor() {}
-
-  getTimer(stepTime: number, startDelay: number) {
-    return new TurnTimer(stepTime, startDelay);
+  getTimer(period: number, initialCounter: number = 0, initialIsRunning: boolean = false) {
+    return new TurnTimer(period, initialCounter, initialIsRunning);
   }
 }
