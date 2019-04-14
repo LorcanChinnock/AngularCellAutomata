@@ -6,9 +6,4 @@ describe('app', () => {
   beforeEach(() => {
     page = new AppPage();
   });
-
-  it('should display hello message', () => {
-    page.navigateTo();
-    expect(page.getParagraphText()).toEqual('Hello world !');
-  });
 });

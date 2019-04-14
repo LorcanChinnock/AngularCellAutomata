@@ -2,12 +2,12 @@ import {
   Component,
   ViewChild,
   ElementRef,
-  AfterViewInit,
   Input,
   OnDestroy,
   HostListener,
   ChangeDetectionStrategy,
-  OnInit
+  OnInit,
+  AfterContentInit
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ChanceService } from '@app/shared/services/chanceService/chance.service';
@@ -20,7 +20,7 @@ import { TurnTimer } from '@app/shared/services/timer/turn-timer';
   styleUrls: ['./game-of-life.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
+export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy {
   turnTimer: TurnTimer;
 
   @Input() numberOfTiles = 100;
@@ -55,7 +55,7 @@ export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.timerSubscription = this.turnTimer.timer$.subscribe(_ => this.updateState());
   }
 
-  ngAfterViewInit(): void {
+  ngAfterContentInit(): void {
     this.resetGame();
   }
 
