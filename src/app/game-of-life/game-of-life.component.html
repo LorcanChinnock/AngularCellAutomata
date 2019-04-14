@@ -10,7 +10,7 @@
         <input
           type="button"
           class="col btn btn-primary"
-          id="startButton"
+          id="start-button"
           value="Start"
           [disabled]="turnTimer.isRunning"
           (click)="start()"
@@ -18,24 +18,24 @@
         <input
           type="button"
           class="col btn btn-primary"
-          id="pauseButton"
+          id="pause-button"
           value="Pause"
           [disabled]="!turnTimer.isRunning"
           (click)="togglePause()"
         />
-        <input type="button" class="col btn btn-primary" id="restartButton" value="Restart" (click)="resetGame()" />
+        <input type="button" class="col btn btn-primary" id="restart-button" value="Restart" (click)="resetGame()" />
       </div>
       <div class="row control">
-        <label for="alivePercentSlider">Start Alive Cell %</label>
-        <input type="range" class="custom-range config-input" min="0" max="100" id="alivePercentSlider" />
+        <label for="alive-percent-slider">Start Alive Cell %</label>
+        <input type="range" class="custom-range config-input" min="0" max="100" id="alive-percent-slider" />
       </div>
       <div class="row control">
-        <label for="gridSizeSlider">Grid Size (Min: 1, Max: 200)</label>
-        <input type="range" class="custom-range config-input" min="1" max="200" id="gridSizeSlider" />
+        <label for="grid-size-slider">Grid Size (Min: 1, Max: 200)</label>
+        <input type="range" class="custom-range config-input" min="1" max="200" id="grid-size-slider" />
       </div>
       <div class="row control">
-        <label for="speedSlider">Simulation Speed Per Update (Min 1s, Max: 1ms)</label>
-        <input type="range" class="custom-range config-input" min="1" max="1000" id="speedSlider" />
+        <label for="speed-slider">Simulation Speed Per Update (Min 1s, Max: 1ms)</label>
+        <input type="range" class="custom-range config-input" min="1" max="1000" id="speed-slider" />
       </div>
     </div>
   </div>
