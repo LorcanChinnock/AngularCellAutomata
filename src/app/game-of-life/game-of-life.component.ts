@@ -6,10 +6,13 @@ import {
   Input,
   OnDestroy,
   HostListener,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  OnInit
 } from '@angular/core';
-import { Observable, timer, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { ChanceService } from '@app/shared/services/chanceService/chance.service';
+import { TimerService } from '@app/shared/services/timer/timer.service';
+import { TurnTimer } from '@app/shared/services/timer/turn-timer';
 
 @Component({
   selector: 'app-game-of-life',
@@ -17,29 +20,28 @@ import { ChanceService } from '@app/shared/services/chanceService/chance.service
   styleUrls: ['./game-of-life.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GameOfLifeComponent implements AfterViewInit, OnDestroy {
+export class GameOfLifeComponent implements OnInit, AfterViewInit, OnDestroy {
+  turnTimer: TurnTimer;
+
   @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
 
   @Input() public numberOfTiles = 100;
-  @Input() public speedInMilliseconds = 50;
+  @Input() public speedInMilliseconds = 100;
   @Input() public aliveStartPercentage = 10;
 
   private screenHeight: number;
   private screenWidth: number;
-
   private cellSize: number;
-
   private currentState: number[][];
   private nextState: number[][];
-
   private context: CanvasRenderingContext2D;
-  private timer$: Observable<number> = timer(0, this.speedInMilliseconds);
   private timerSubscription: Subscription;
 
-  constructor(private chanceService: ChanceService) {
+  constructor(private chanceService: ChanceService, timerService: TimerService) {
+    this.turnTimer = timerService.getTimer(50, 0);
     this.onResize();
     this.calculateCellSize();
-    this.currentState = this.create2dArray();
+    this.currentState = this.initialiseStateArray();
   }
 
   @HostListener('window:resize', ['$event'])
@@ -48,21 +50,43 @@ export class GameOfLifeComponent implements AfterViewInit, OnDestroy {
     this.screenWidth = window.innerWidth;
   }
 
-  ngAfterViewInit(): void {
+  ngOnInit(): void {
     this.setupCanvas();
-    this.populateGridRandom();
-    this.timerSubscription = this.timer$.subscribe(_ => this.updateState());
+    this.timerSubscription = this.turnTimer.timer$.subscribe(_ => this.updateState());
+  }
+
+  ngAfterViewInit(): void {
+    this.resetGame();
   }
 
   ngOnDestroy(): void {
     this.timerSubscription.unsubscribe();
   }
 
+  start() {
+    if (!this.turnTimer.isRunning) {
+      this.turnTimer.resume();
+    }
+  }
+
+  togglePause() {
+    if (this.turnTimer.isRunning) {
+      this.turnTimer.pause();
+    } else {
+      this.turnTimer.resume();
+    }
+  }
+
+  resetGame() {
+    this.turnTimer.reset();
+    this.populateGridRandom();
+  }
+
   private calculateCellSize() {
     this.cellSize = this.getMinScreenDimension() / this.numberOfTiles;
   }
 
-  private create2dArray() {
+  private initialiseStateArray() {
     const board = Array();
     for (let i = 0; i < this.numberOfTiles; i++) {
       board[i] = Array();

@@ -1,5 +1,42 @@
-<div class="container">
+<div class="container-fluid">
   <div class="row">
-    <canvas class="col text-center" #gameOfLifeCanvas> </canvas>
+    <div class="col jumbotron" id="stats-panel"></div>
+    <canvas class="col " #gameOfLifeCanvas> </canvas>
+    <div class="col jumbotron" id="control-panel">
+      <div class="row">
+        <h3>Generation Count: {{ turnTimer.timerCounter$ | async }}</h3>
+      </div>
+      <div class="row control">
+        <input
+          type="button"
+          class="col btn btn-primary"
+          id="startButton"
+          value="Start"
+          [disabled]="turnTimer.isRunning"
+          (click)="start()"
+        />
+        <input
+          type="button"
+          class="col btn btn-primary"
+          id="pauseButton"
+          value="Pause"
+          [disabled]="!turnTimer.isRunning"
+          (click)="togglePause()"
+        />
+        <input type="button" class="col btn btn-primary" id="restartButton" value="Restart" (click)="resetGame()" />
+      </div>
+      <div class="row control">
+        <label for="alivePercentSlider">Start Alive Cell %</label>
+        <input type="range" class="custom-range config-input" min="0" max="100" id="alivePercentSlider" />
+      </div>
+      <div class="row control">
+        <label for="gridSizeSlider">Grid Size (Min: 1, Max: 200)</label>
+        <input type="range" class="custom-range config-input" min="1" max="200" id="gridSizeSlider" />
+      </div>
+      <div class="row control">
+        <label for="speedSlider">Simulation Speed Per Update (Min 1s, Max: 1ms)</label>
+        <input type="range" class="custom-range config-input" min="1" max="1000" id="speedSlider" />
+      </div>
+    </div>
   </div>
 </div>
