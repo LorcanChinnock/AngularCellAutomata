@@ -4,7 +4,7 @@
     <canvas class="col " #gameOfLifeCanvas> </canvas>
     <div class="col jumbotron" id="control-panel">
       <div class="row">
-        <h3>Generation Count: {{ turnTimer.timerCounter$ | async }}</h3>
+        <h3>Generation Count: {{ persistantCounter | async }}</h3>
       </div>
       <div class="row control">
         <input
@@ -34,11 +34,11 @@
         <input type="range" class="custom-range config-input" min="1" max="200" id="grid-size-slider" />
       </div>
       <div class="row control">
-        <label for="speed-slider">Simulation Speed Per Update (Min 1s, Max: 10ms)</label>
+        <label for="speed-slider">Generation duration (Min: 50ms, Max 1s)</label>
         <input
           type="range"
           class="custom-range config-input"
-          min="10"
+          min="50"
           max="1000"
           id="speed-slider"
           [(ngModel)]="speedInMilliseconds"

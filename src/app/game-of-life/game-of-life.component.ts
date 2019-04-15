@@ -9,10 +9,13 @@ import {
   OnInit,
   AfterContentInit
 } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, BehaviorSubject } from 'rxjs';
 import { ChanceService } from '@app/shared/services/chanceService/chance.service';
 import { TimerService } from '@app/shared/services/timer/timer.service';
 import { TurnTimer } from '@app/shared/services/timer/turn-timer';
+import { Logger } from '@app/core/logger.service';
+
+const log = new Logger('Game Of Life');
 
 @Component({
   selector: 'app-game-of-life',
@@ -22,6 +25,8 @@ import { TurnTimer } from '@app/shared/services/timer/turn-timer';
 })
 export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy {
   turnTimer: TurnTimer;
+
+  persistantCounter = new BehaviorSubject<number>(0);
 
   @Input() numberOfTiles = 100;
   @Input() speedInMilliseconds = 100;
@@ -36,6 +41,7 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   private nextState: number[][];
   private context: CanvasRenderingContext2D;
   private timerSubscription: Subscription;
+  private counterSubscription: Subscription;
 
   constructor(private chanceService: ChanceService, private timerService: TimerService) {
     this.turnTimer = timerService.getTimer(this.speedInMilliseconds);
@@ -52,7 +58,7 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   ngOnInit(): void {
     this.setupCanvas();
-    this.timerSubscription = this.turnTimer.timer$.subscribe(_ => this.updateState());
+    this.setupTimerSubscription();
   }
 
   ngAfterContentInit(): void {
@@ -61,6 +67,7 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   ngOnDestroy(): void {
     this.timerSubscription.unsubscribe();
+    this.counterSubscription.unsubscribe();
   }
 
   start() {
@@ -87,7 +94,16 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
     const currentCount = this.turnTimer.getCurrentCounter();
     const currentlyRunning = this.turnTimer.getIsRunning();
     this.turnTimer = this.timerService.getTimer(this.speedInMilliseconds, currentCount, currentlyRunning);
-    this.timerSubscription = this.turnTimer.timer$.subscribe(_ => this.updateState());
+    this.setupTimerSubscription();
+  }
+
+  private setupTimerSubscription() {
+    this.timerSubscription = this.turnTimer.timer$.subscribe(_ => {
+      this.updateState();
+    });
+    this.counterSubscription = this.turnTimer.timerCounter$.subscribe(count => {
+      this.persistantCounter.next(count);
+    });
   }
 
   private calculateCellSize() {
