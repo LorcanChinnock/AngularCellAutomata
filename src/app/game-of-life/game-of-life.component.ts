@@ -13,9 +13,6 @@ import { Subscription, BehaviorSubject } from 'rxjs';
 import { ChanceService } from '@app/shared/services/chanceService/chance.service';
 import { TimerService } from '@app/shared/services/timer/timer.service';
 import { TurnTimer } from '@app/shared/services/timer/turn-timer';
-import { Logger } from '@app/core/logger.service';
-
-const log = new Logger('Game Of Life');
 
 @Component({
   selector: 'app-game-of-life',
