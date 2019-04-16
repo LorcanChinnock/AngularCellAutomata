@@ -20,7 +20,7 @@
           class="col btn btn-primary"
           id="pause-button"
           value="Pause"
-          [disabled]="!turnTimer.isRunning"
+          [disabled]="!turnTimer.getIsRunning()"
           (click)="togglePause()"
         />
         <input type="button" class="col btn btn-primary" id="restart-button" value="Restart" (click)="resetGame()" />
