@@ -1,6 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { GameOfLifeComponent } from './game-of-life.component';
+import { FormsModule } from '@angular/forms';
 
 describe('GameOfLifeComponent', () => {
   let component: GameOfLifeComponent;
@@ -8,6 +9,7 @@ describe('GameOfLifeComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
+      imports: [FormsModule],
       declarations: [GameOfLifeComponent]
     }).compileComponents();
   }));

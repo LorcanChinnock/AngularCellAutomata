@@ -9,7 +9,7 @@ import {
   OnInit,
   AfterContentInit
 } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, BehaviorSubject } from 'rxjs';
 import { ChanceService } from '@app/shared/services/chanceService/chance.service';
 import { TimerService } from '@app/shared/services/timer/timer.service';
 import { TurnTimer } from '@app/shared/services/timer/turn-timer';
@@ -23,11 +23,13 @@ import { TurnTimer } from '@app/shared/services/timer/turn-timer';
 export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy {
   turnTimer: TurnTimer;
 
-  @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
+  persistantCounter = new BehaviorSubject<number>(0);
 
-  @Input() public numberOfTiles = 100;
-  @Input() public speedInMilliseconds = 100;
-  @Input() public aliveStartPercentage = 10;
+  @Input() numberOfTiles = 100;
+  @Input() speedInMilliseconds = 100;
+  @Input() aliveStartPercentage = 10;
+
+  @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
 
   private screenHeight: number;
   private screenWidth: number;
@@ -36,9 +38,10 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   private nextState: number[][];
   private context: CanvasRenderingContext2D;
   private timerSubscription: Subscription;
+  private counterSubscription: Subscription;
 
-  constructor(private chanceService: ChanceService, timerService: TimerService) {
-    this.turnTimer = timerService.getTimer(50, 0);
+  constructor(private chanceService: ChanceService, private timerService: TimerService) {
+    this.turnTimer = timerService.getTimer(this.speedInMilliseconds);
     this.onResize();
     this.calculateCellSize();
     this.currentState = this.initialiseStateArray();
@@ -52,7 +55,7 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   ngOnInit(): void {
     this.setupCanvas();
-    this.timerSubscription = this.turnTimer.timer$.subscribe(_ => this.updateState());
+    this.setupTimerSubscription();
   }
 
   ngAfterContentInit(): void {
@@ -61,16 +64,17 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   ngOnDestroy(): void {
     this.timerSubscription.unsubscribe();
+    this.counterSubscription.unsubscribe();
   }
 
   start() {
-    if (!this.turnTimer.isRunning) {
+    if (!this.turnTimer.getIsRunning()) {
       this.turnTimer.resume();
     }
   }
 
   togglePause() {
-    if (this.turnTimer.isRunning) {
+    if (this.turnTimer.getIsRunning()) {
       this.turnTimer.pause();
     } else {
       this.turnTimer.resume();
@@ -80,6 +84,23 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   resetGame() {
     this.turnTimer.reset();
     this.populateGridRandom();
+  }
+
+  changeSpeed() {
+    this.timerSubscription.unsubscribe();
+    const currentCount = this.turnTimer.getCurrentCounter();
+    const currentlyRunning = this.turnTimer.getIsRunning();
+    this.turnTimer = this.timerService.getTimer(this.speedInMilliseconds, currentCount, currentlyRunning);
+    this.setupTimerSubscription();
+  }
+
+  private setupTimerSubscription() {
+    this.timerSubscription = this.turnTimer.timer$.subscribe(_ => {
+      this.updateState();
+    });
+    this.counterSubscription = this.turnTimer.timerCounter$.subscribe(count => {
+      this.persistantCounter.next(count);
+    });
   }
 
   private calculateCellSize() {
