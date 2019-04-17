@@ -25,7 +25,7 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   persistantCounter = new BehaviorSubject<number>(0);
 
-  @Input() numberOfTiles = 100;
+  @Input() numberOfTiles = 200;
   @Input() speedInMilliseconds = 100;
   @Input() aliveStartPercentage = 10;
 
@@ -36,7 +36,7 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   private cellSize: number;
   private currentState: number[][];
   private nextState: number[][];
-  private context: CanvasRenderingContext2D;
+  private canvasContext: CanvasRenderingContext2D;
   private timerSubscription: Subscription;
   private counterSubscription: Subscription;
 
@@ -116,9 +116,10 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   }
 
   private setupCanvas() {
-    this.context = this.canvas.nativeElement.getContext('2d');
-    this.context.canvas.height = this.getMinScreenDimension();
-    this.context.canvas.width = this.getMinScreenDimension();
+    this.canvasContext = this.canvas.nativeElement.getContext('2d');
+    const minScreenDimension = this.getMinScreenDimension();
+    this.canvasContext.canvas.height = minScreenDimension;
+    this.canvasContext.canvas.width = minScreenDimension;
   }
 
   private getMinScreenDimension() {
@@ -126,12 +127,15 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   }
 
   private populateGridRandom() {
+    this.clearCanvas();
     for (let i = 0; i < this.numberOfTiles; i++) {
       for (let j = 0; j < this.numberOfTiles; j++) {
         this.currentState[i][j] = this.getOneOrZero();
+        if (this.currentState[i][j] == 1) {
+          this.setCellToBlack(i, j);
+        }
       }
     }
-    this.setDisplayFromCurrentState();
   }
 
   private getOneOrZero() {
@@ -142,17 +146,19 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   }
 
   private updateState() {
+    this.clearCanvas();
     this.nextState = this.currentState;
     for (let i = 0; i < this.numberOfTiles; i++) {
       for (let j = 0; j < this.numberOfTiles; j++) {
-        this.findNextStateWithRules(i, j);
+        if (this.findNextStateWithRules(i, j) === 1) {
+          this.setCellToBlack(i, j);
+        }
       }
     }
     this.currentState = this.nextState;
-    this.setDisplayFromCurrentState();
   }
 
-  private findNextStateWithRules(xPos: number, yPos: number) {
+  private findNextStateWithRules(xPos: number, yPos: number): number {
     const isAlive = this.currentState[xPos][yPos] === 1;
     const currentAmountOfNeighbours = this.getAmountOfNeighbours(xPos, yPos);
     const shouldDieDueToUnderPopulation = currentAmountOfNeighbours <= 1;
@@ -161,37 +167,24 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
     if (isAlive) {
       if (shouldDieDueToUnderPopulation || shouldDieDueToOverPopulation) {
         this.nextState[xPos][yPos] = 0;
+        return 0;
       }
     } else {
       if (shouldBecomeLive) {
         this.nextState[xPos][yPos] = 1;
+        return 1;
       }
     }
   }
 
-  private setDisplayFromCurrentState() {
-    for (let i = 0; i < this.numberOfTiles; i++) {
-      for (let j = 0; j < this.numberOfTiles; j++) {
-        if (this.currentState[i][j] === 1) {
-          this.setCellToBlack(i, j);
-        } else {
-          this.clearCell(i, j);
-        }
-      }
-    }
+  private clearCanvas() {
+    this.canvasContext.clearRect(0, 0, this.getMinScreenDimension(), this.getMinScreenDimension());
   }
 
   private setCellToBlack(i: number, j: number) {
     const cellXPos = i * this.cellSize;
     const cellYPos = j * this.cellSize;
-    this.clearCell(cellXPos, cellYPos);
-    this.context.fillRect(cellXPos, cellYPos, this.cellSize, this.cellSize);
-  }
-
-  private clearCell(i: number, j: number) {
-    const cellXPos = i * this.cellSize;
-    const cellYPos = j * this.cellSize;
-    this.context.clearRect(cellXPos, cellYPos, this.cellSize, this.cellSize);
+    this.canvasContext.fillRect(cellXPos, cellYPos, this.cellSize, this.cellSize);
   }
 
   private getAmountOfNeighbours(x: number, y: number) {
