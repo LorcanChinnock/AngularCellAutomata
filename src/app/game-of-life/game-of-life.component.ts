@@ -1,15 +1,15 @@
 import {
+  AfterContentInit,
+  ChangeDetectionStrategy,
   Component,
-  ViewChild,
   ElementRef,
+  HostListener,
   Input,
   OnDestroy,
-  HostListener,
-  ChangeDetectionStrategy,
   OnInit,
-  AfterContentInit
+  ViewChild
 } from '@angular/core';
-import { Subscription, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { ChanceService } from '@app/shared/services/chanceService/chance.service';
 import { TimerService } from '@app/shared/services/timer/timer.service';
 import { TurnTimer } from '@app/shared/services/timer/turn-timer';
@@ -23,11 +23,11 @@ import { TurnTimer } from '@app/shared/services/timer/turn-timer';
 export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy {
   turnTimer: TurnTimer;
 
-  persistantCounter = new BehaviorSubject<number>(0);
+  persistentCounter = new BehaviorSubject<number>(0);
 
-  @Input() numberOfTiles = 200;
+  @Input() numberOfTiles = 100;
   @Input() speedInMilliseconds = 100;
-  @Input() aliveStartPercentage = 10;
+  @Input() aliveStartPercentage = 5;
 
   @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
 
@@ -42,15 +42,16 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   constructor(private chanceService: ChanceService, private timerService: TimerService) {
     this.turnTimer = timerService.getTimer(this.speedInMilliseconds);
-    this.onResize();
+    this.resolveScreenSize();
     this.calculateCellSize();
     this.currentState = this.initialiseStateArray();
   }
 
   @HostListener('window:resize', ['$event'])
-  onResize(_?: Event) {
-    this.screenHeight = window.innerHeight - 80;
-    this.screenWidth = window.innerWidth;
+  onResize() {
+    this.resolveScreenSize();
+    this.setupCanvas();
+    this.updateState(true);
   }
 
   ngOnInit(): void {
@@ -68,9 +69,7 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   }
 
   start() {
-    if (!this.turnTimer.getIsRunning()) {
-      this.turnTimer.resume();
-    }
+    this.turnTimer.resume();
   }
 
   togglePause() {
@@ -88,18 +87,25 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   changeSpeed() {
     this.timerSubscription.unsubscribe();
-    const currentCount = this.turnTimer.getCurrentCounter();
-    const currentlyRunning = this.turnTimer.getIsRunning();
-    this.turnTimer = this.timerService.getTimer(this.speedInMilliseconds, currentCount, currentlyRunning);
+    this.turnTimer = this.timerService.getTimer(
+      this.speedInMilliseconds,
+      this.turnTimer.getCurrentCounter(),
+      this.turnTimer.getIsRunning()
+    );
     this.setupTimerSubscription();
   }
 
+  private resolveScreenSize() {
+    this.screenHeight = window.innerHeight - 80;
+    this.screenWidth = window.innerWidth;
+  }
+
   private setupTimerSubscription() {
-    this.timerSubscription = this.turnTimer.timer$.subscribe(_ => {
-      this.updateState();
+    this.timerSubscription = this.turnTimer.timer$.subscribe(() => {
+      this.updateState(false);
     });
     this.counterSubscription = this.turnTimer.timerCounter$.subscribe(count => {
-      this.persistantCounter.next(count);
+      this.persistentCounter.next(count);
     });
   }
 
@@ -108,11 +114,11 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   }
 
   private initialiseStateArray() {
-    const board = Array();
+    const stateArray = Array();
     for (let i = 0; i < this.numberOfTiles; i++) {
-      board[i] = Array();
+      stateArray[i] = Array();
     }
-    return board;
+    return stateArray;
   }
 
   private setupCanvas() {
@@ -120,6 +126,27 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
     const minScreenDimension = this.getMinScreenDimension();
     this.canvasContext.canvas.height = minScreenDimension;
     this.canvasContext.canvas.width = minScreenDimension;
+    this.canvasContext.canvas.addEventListener('mousedown', () => {
+      this.canvasContext.canvas.addEventListener('mousemove', mouseMoveEvent => {
+        const clickPos = {
+          x: mouseMoveEvent.pageX - this.canvasContext.canvas.offsetLeft,
+          y: mouseMoveEvent.pageY - this.canvasContext.canvas.offsetTop
+        };
+        const xPos = Math.floor(clickPos.x / this.cellSize);
+        const yPos = Math.floor(clickPos.y / this.cellSize);
+        this.toggleCellManual(xPos, yPos);
+      });
+    });
+  }
+
+  private toggleCellManual(xPos: number, yPos: number) {
+    if (this.currentState[xPos][yPos] === 1) {
+      this.killCell(xPos, yPos);
+      this.currentState[xPos][yPos] = 0;
+    } else {
+      this.populateCell(xPos, yPos);
+      this.currentState[xPos][yPos] = 1;
+    }
   }
 
   private getMinScreenDimension() {
@@ -131,8 +158,8 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
     for (let i = 0; i < this.numberOfTiles; i++) {
       for (let j = 0; j < this.numberOfTiles; j++) {
         this.currentState[i][j] = this.getOneOrZero();
-        if (this.currentState[i][j] == 1) {
-          this.setCellToBlack(i, j);
+        if (this.currentState[i][j] === 1) {
+          this.populateCell(i, j);
         }
       }
     }
@@ -145,17 +172,20 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
     return this.chanceService.getWeightedRandom(values, weights);
   }
 
-  private updateState() {
+  private updateState(onResize: boolean) {
     this.clearCanvas();
-    this.nextState = this.currentState;
-    for (let i = 0; i < this.numberOfTiles; i++) {
-      for (let j = 0; j < this.numberOfTiles; j++) {
-        if (this.findNextStateWithRules(i, j) === 1) {
-          this.setCellToBlack(i, j);
+    if (!onResize) {
+      this.nextState = this.currentState;
+      for (let i = 0; i < this.numberOfTiles; i++) {
+        for (let j = 0; j < this.numberOfTiles; j++) {
+          if (this.findNextStateWithRules(i, j) === 1) {
+            this.populateCell(i, j);
+          }
         }
       }
+      this.currentState = this.nextState;
+    } else {
     }
-    this.currentState = this.nextState;
   }
 
   private findNextStateWithRules(xPos: number, yPos: number): number {
@@ -178,10 +208,16 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   }
 
   private clearCanvas() {
-    this.canvasContext.clearRect(0, 0, this.getMinScreenDimension(), this.getMinScreenDimension());
+    this.canvasContext.fillRect(0, 0, this.getMinScreenDimension(), this.getMinScreenDimension());
   }
 
-  private setCellToBlack(i: number, j: number) {
+  private populateCell(i: number, j: number) {
+    const cellXPos = i * this.cellSize;
+    const cellYPos = j * this.cellSize;
+    this.canvasContext.clearRect(cellXPos, cellYPos, this.cellSize, this.cellSize);
+  }
+
+  private killCell(i: number, j: number) {
     const cellXPos = i * this.cellSize;
     const cellYPos = j * this.cellSize;
     this.canvasContext.fillRect(cellXPos, cellYPos, this.cellSize, this.cellSize);
