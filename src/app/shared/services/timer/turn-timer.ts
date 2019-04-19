@@ -28,10 +28,6 @@ export class TurnTimer {
     this.isRunning = true;
   }
 
-  changeSpeed(newPeriod: number) {
-    this.timer$ = this.createTimer(newPeriod);
-  }
-
   getIsRunning(): boolean {
     return this.isRunning;
   }

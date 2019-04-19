@@ -1,4 +1,4 @@
-# testAngular
+# angularCellularAutomata
 
 Welcome to the project documentation!
 
