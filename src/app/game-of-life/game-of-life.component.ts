@@ -26,9 +26,9 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   persistentCounter = new BehaviorSubject<number>(0);
 
-  @Input() numberOfTiles = 100;
+  @Input() numberOfTiles = 200;
   @Input() speedInMilliseconds = 100;
-  @Input() aliveStartPercentage = 5;
+  @Input() aliveStartPercentage = 10;
 
   @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
 
@@ -124,8 +124,9 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   private setupCanvas() {
     this.canvasContext = this.canvas.nativeElement.getContext('2d');
-    this.canvasContext.canvas.height = this.getMinScreenDimension();
-    this.canvasContext.canvas.width = this.getMinScreenDimension();
+    const minScreenDimension = this.getMinScreenDimension();
+    this.canvasContext.canvas.height = minScreenDimension;
+    this.canvasContext.canvas.width = minScreenDimension;
     this.setupCanvasEventListeners();
   }
 
@@ -139,9 +140,10 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   }
 
   private calculateCellFromPixel(mouseEvent: MouseEvent) {
+    const canvasBounds = this.canvasContext.canvas.getBoundingClientRect();
     const mouseEventCellPoint = new Point(
-      Math.floor((mouseEvent.clientX - this.canvasContext.canvas.offsetLeft) / this.cellSize),
-      Math.floor((mouseEvent.clientY - this.canvasContext.canvas.offsetTop) / this.cellSize)
+      Math.floor((mouseEvent.clientX - canvasBounds.left) / this.cellSize),
+      Math.floor((mouseEvent.clientY - canvasBounds.top) / this.cellSize)
     );
     this.toggleCellManual(mouseEventCellPoint);
   }
@@ -154,14 +156,6 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
       this.populateCell(cellPoint.x, cellPoint.y);
       this.currentState[cellPoint.x][cellPoint.y] = 1;
     }
-  }
-
-  private getMinScreenDimension() {
-    let minScreenDimension = Math.min(this.screenHeight, this.screenWidth);
-    while (minScreenDimension % this.numberOfTiles !== 0) {
-      --minScreenDimension;
-    }
-    return minScreenDimension;
   }
 
   private populateGridRandom() {
@@ -194,7 +188,6 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
           }
         }
       }
-
       this.currentState = this.nextState;
     }
   }
@@ -220,6 +213,14 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   private clearCanvas() {
     this.canvasContext.fillRect(0, 0, this.getMinScreenDimension(), this.getMinScreenDimension());
+  }
+
+  private getMinScreenDimension() {
+    let minScreenDimension = Math.min(this.screenHeight, this.screenWidth);
+    while (minScreenDimension % this.numberOfTiles !== 0) {
+      --minScreenDimension;
+    }
+    return minScreenDimension;
   }
 
   private populateCell(i: number, j: number) {
