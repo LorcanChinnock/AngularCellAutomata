@@ -131,6 +131,7 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   private setupCanvasEventListeners() {
     this.canvasContext.canvas.addEventListener('click', mouseEvent => {
+      mouseEvent.preventDefault();
       this.calculateCellFromPixel(mouseEvent);
     });
   }
