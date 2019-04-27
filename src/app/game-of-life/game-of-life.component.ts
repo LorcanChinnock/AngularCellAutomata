@@ -26,9 +26,9 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   persistentCounter = new BehaviorSubject<number>(0);
 
-  @Input() numberOfTiles = 200;
-  @Input() speedInMilliseconds = 100;
-  @Input() aliveStartPercentage = 10;
+  @Input() numberOfTiles = 250;
+  @Input() speedInMilliseconds = 10;
+  @Input() aliveStartPercentage = 25;
 
   @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
 
@@ -36,7 +36,6 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   private screenWidth: number;
   private cellSize: number;
   private currentState: number[][];
-  private nextState: number[][];
   private canvasContext: CanvasRenderingContext2D;
   private timerSubscription: Subscription;
   private counterSubscription: Subscription;
@@ -45,7 +44,7 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
     this.turnTimer = timerService.getTimer(this.speedInMilliseconds);
     this.resolveScreenSize();
     this.calculateCellSize();
-    this.currentState = this.initialiseStateArray();
+    this.currentState = this.create2DArray(this.numberOfTiles);
   }
 
   @HostListener('window:resize', ['$event'])
@@ -83,6 +82,10 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   resetGame() {
     this.turnTimer.reset();
+    this.setupCanvas();
+    this.calculateCellSize();
+
+    this.currentState = this.create2DArray(this.numberOfTiles);
     this.populateGridRandom();
   }
 
@@ -94,6 +97,22 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
       this.turnTimer.getIsRunning()
     );
     this.setupTimerSubscription();
+  }
+
+  changeStartPercentage() {
+    if (this.turnTimer.getCurrentCounter() === 0) {
+      this.resetGame();
+    }
+  }
+
+  changeNumberOfTiles() {
+    if (this.turnTimer.getCurrentCounter() === 0) {
+      this.resetGame();
+    }
+  }
+
+  private create2DArray(length: number): number[][] {
+    return new Array(length).fill(0).map(() => new Array(length).fill(0));
   }
 
   private resolveScreenSize() {
@@ -112,14 +131,6 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   private calculateCellSize() {
     this.cellSize = this.getMinScreenDimension() / this.numberOfTiles;
-  }
-
-  private initialiseStateArray() {
-    const stateArray = Array();
-    for (let i = 0; i < this.numberOfTiles; i++) {
-      stateArray[i] = Array();
-    }
-    return stateArray;
   }
 
   private setupCanvas() {
@@ -180,33 +191,34 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
   private updateState(onResize: boolean) {
     this.clearCanvas();
     if (!onResize) {
-      this.nextState = this.currentState;
+      const nextState = this.create2DArray(this.numberOfTiles);
       for (let i = 0; i < this.numberOfTiles; i++) {
         for (let j = 0; j < this.numberOfTiles; j++) {
           if (this.findNextStateWithRules(i, j) === 1) {
             this.populateCell(i, j);
+            nextState[i][j] = 1;
           }
         }
       }
-      this.currentState = this.nextState;
+      this.currentState = nextState;
     }
   }
 
   private findNextStateWithRules(xPos: number, yPos: number): number {
     const isAlive = this.currentState[xPos][yPos] === 1;
     const currentAmountOfNeighbours = this.getAmountOfNeighbours(xPos, yPos);
-    const shouldDieDueToUnderPopulation = currentAmountOfNeighbours <= 1;
-    const shouldDieDueToOverPopulation = currentAmountOfNeighbours >= 4;
-    const shouldBecomeLive = currentAmountOfNeighbours === 3;
+
     if (isAlive) {
-      if (shouldDieDueToUnderPopulation || shouldDieDueToOverPopulation) {
-        this.nextState[xPos][yPos] = 0;
+      if (currentAmountOfNeighbours <= 1 || currentAmountOfNeighbours >= 4) {
         return 0;
+      } else {
+        return 1;
       }
     } else {
-      if (shouldBecomeLive) {
-        this.nextState[xPos][yPos] = 1;
+      if (currentAmountOfNeighbours === 3) {
         return 1;
+      } else {
+        return 0;
       }
     }
   }
@@ -215,12 +227,8 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
     this.canvasContext.fillRect(0, 0, this.getMinScreenDimension(), this.getMinScreenDimension());
   }
 
-  private getMinScreenDimension() {
-    let minScreenDimension = Math.min(this.screenHeight, this.screenWidth);
-    while (minScreenDimension % this.numberOfTiles !== 0) {
-      --minScreenDimension;
-    }
-    return minScreenDimension;
+  private getMinScreenDimension(): number {
+    return Math.min(this.screenHeight, this.screenWidth);
   }
 
   private populateCell(i: number, j: number) {

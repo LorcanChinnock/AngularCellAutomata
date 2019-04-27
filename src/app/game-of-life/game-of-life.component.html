@@ -28,18 +28,33 @@
       </div>
       <div class="row control">
         <label for="alive-percent-slider">Start Alive Cell %</label>
-        <input type="range" class="custom-range config-input" min="0" max="100" id="alive-percent-slider" />
+        <input
+          type="range"
+          class="custom-range config-input"
+          min="0"
+          max="100"
+          id="alive-percent-slider"
+          [(ngModel)]="aliveStartPercentage"
+        />
       </div>
       <div class="row control">
         <label for="grid-size-slider">Grid Size (Min: 1, Max: 200)</label>
-        <input type="range" class="custom-range config-input" min="1" max="200" id="grid-size-slider" />
+        <input
+          type="range"
+          class="custom-range config-input"
+          step="1"
+          min="1"
+          max="500"
+          id="grid-size-slider"
+          [(ngModel)]="numberOfTiles"
+        />
       </div>
       <div class="row control">
         <label for="speed-slider">Generation duration (Min: 50ms, Max 1s)</label>
         <input
           type="range"
           class="custom-range config-input"
-          min="50"
+          min="1"
           max="1000"
           id="speed-slider"
           [(ngModel)]="speedInMilliseconds"
