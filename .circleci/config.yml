@@ -23,7 +23,8 @@ jobs:
       - checkout
       - restore_cache:
           key: AngularCircleCI-{{ .Branch }}-{{ checksum "package.json" }}
-      - run: sudo npm intall -g angular-cli-ghpages
+      - run: sudo npm install -g @angular/cli
+      - run: sudo npm install -g angular-cli-ghpages
       - run: npm install
 
       - save_cache:
@@ -32,10 +33,10 @@ jobs:
             - 'node_modules'
       - run:
           name: Generate Build
-          command: ng build --prod --base-href "https://lorcanchinnock.github.io/AngularCellAutomata/"
+          command: xvfb-run -a npm run buildForGhPages
       - run:
-          command: |
-            npx ngh --repo=https://$GH_TOKEN@github.com/LorcanChinnock/AngularCellAutomata.git --name="Lorcan Chinnock" --email=ljchinnock@gmail.com
+          name: Publish to Github Pages
+          command: xvfb-run -a sudo npx ngh --repo=https://$GH_TOKEN@github.com/LorcanChinnock/AngularCellAutomata.git --name="Lorcan Chinnock" --email=ljchinnock@gmail.com
 workflows:
   version: 2
   build_and_deploy:
