@@ -35,8 +35,8 @@ jobs:
           name: Generate Build
           command: xvfb-run -a npm run buildForGhPages
       - run:
-          command: |
-            npx ngh --repo=https://$GH_TOKEN@github.com/LorcanChinnock/AngularCellAutomata.git --no-silent --name="Lorcan Chinnock" --email=ljchinnock@gmail.com
+        name: Publish to Github Pages
+          command: xvfb-run -a npx ngh --repo=https://$GH_TOKEN@github.com/LorcanChinnock/AngularCellAutomata.git --no-silent --name="Lorcan Chinnock" --email=ljchinnock@gmail.com
 workflows:
   version: 2
   build_and_deploy:
@@ -47,4 +47,4 @@ workflows:
             - build
           filters:
             branches:
-              only: master
+              ignore: master
