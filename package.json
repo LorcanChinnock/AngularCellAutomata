@@ -18,7 +18,7 @@
     "postinstall": "npm run prettier -s",
     "precommit": "pretty-quick --staged",
     "generate": "ng generate",
-    "buildgithubpages": "ng build --prod --base-href 'https: //lorcanchinnock.github.io/AngularCellAutomata/'",
+    "buildgithubpages": "npm run env -s && ng build --prod --base-href 'https: //lorcanchinnock.github.io/AngularCellAutomata/'",
     "deploygithubpages": "ngh"
   },
   "dependencies": {
