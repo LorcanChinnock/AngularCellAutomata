@@ -1,10 +1,11 @@
 <div class="container-fluid">
   <div class="row">
-    <div class="col jumbotron" id="stats-panel"></div>
-    <canvas class="col " #gameOfLifeCanvas> </canvas>
+    <div class="col text-center">
+      <canvas #gameOfLifeCanvas></canvas>
+    </div>
     <div class="col jumbotron" id="control-panel">
       <div class="row">
-        <h3>Generation Count: {{ turnTimer.timerCounter$ | async }}</h3>
+        <h3>Generation Count: {{ persistentCounter | async }}</h3>
       </div>
       <div class="row control">
         <input
@@ -12,7 +13,7 @@
           class="col btn btn-primary"
           id="start-button"
           value="Start"
-          [disabled]="turnTimer.isRunning"
+          [disabled]="turnTimer.getIsRunning()"
           (click)="start()"
         />
         <input
@@ -20,22 +21,45 @@
           class="col btn btn-primary"
           id="pause-button"
           value="Pause"
-          [disabled]="!turnTimer.isRunning"
+          [disabled]="!turnTimer.getIsRunning()"
           (click)="togglePause()"
         />
         <input type="button" class="col btn btn-primary" id="restart-button" value="Restart" (click)="resetGame()" />
       </div>
       <div class="row control">
-        <label for="alive-percent-slider">Start Alive Cell %</label>
-        <input type="range" class="custom-range config-input" min="0" max="100" id="alive-percent-slider" />
+        <label for="alive-percent-slider">Start Alive Cell % : {{ aliveStartPercentage }}%</label>
+        <input
+          type="range"
+          class="custom-range config-input"
+          min="0"
+          max="100"
+          id="alive-percent-slider"
+          [(ngModel)]="aliveStartPercentage"
+        />
       </div>
       <div class="row control">
-        <label for="grid-size-slider">Grid Size (Min: 1, Max: 200)</label>
-        <input type="range" class="custom-range config-input" min="1" max="200" id="grid-size-slider" />
+        <label for="grid-size-slider">Grid Size (Min: 50, Max: 500): {{ numberOfTiles }}</label>
+        <input
+          type="range"
+          class="custom-range config-input"
+          step="1"
+          min="50"
+          max="500"
+          id="grid-size-slider"
+          [(ngModel)]="numberOfTiles"
+        />
       </div>
       <div class="row control">
-        <label for="speed-slider">Simulation Speed Per Update (Min 1s, Max: 1ms)</label>
-        <input type="range" class="custom-range config-input" min="1" max="1000" id="speed-slider" />
+        <label for="speed-slider">Generation duration (Min: 10ms, Max 200ms): {{ speedInMilliseconds }}ms</label>
+        <input
+          type="range"
+          class="custom-range config-input"
+          min="10"
+          max="200"
+          id="speed-slider"
+          [(ngModel)]="speedInMilliseconds"
+          (ngModelChange)="changeSpeed()"
+        />
       </div>
     </div>
   </div>

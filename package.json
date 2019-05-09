@@ -1,5 +1,5 @@
 {
-  "name": "test-angular",
+  "name": "cellular-automata",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -8,7 +8,7 @@
     "start": "npm run env -s && ng serve --aot --proxy-config proxy.conf.js",
     "lint": "ng lint && stylelint \"src/**/*.scss\" --syntax scss && htmlhint \"src\" --config .htmlhintrc",
     "test": "npm run env -s && ng test",
-    "test:ci": "npm run env -s && npm run lint -s && ng test --code-coverage --watch=false",
+    "test:ci": "npm run env -s && ng test --code-coverage --watch=false",
     "e2e": "npm run env -s && ng e2e",
     "translations:extract": "ngx-translate-extract --input ./src --output ./src/translations/template.json --format=json --clean -sort --marker extract",
     "docs": "hads ./docs -o",
@@ -47,7 +47,7 @@
     "@angular-devkit/build-webpack": "^0.13.8",
     "@angular/cli": "~7.0.2",
     "@angular/compiler-cli": "^7.0.0",
-    "@angular/language-service": "^7.0.0",
+    "@angular/language-service": "^7.2.13",
     "@biesbjerg/ngx-translate-extract": "^2.3.4",
     "@ngx-rocket/scripts": "^3.0.2",
     "@types/jasmine": "^2.8.7",

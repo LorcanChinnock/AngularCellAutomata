@@ -1,18 +1,19 @@
 import {
+  AfterContentInit,
+  ChangeDetectionStrategy,
   Component,
-  ViewChild,
   ElementRef,
+  HostListener,
   Input,
   OnDestroy,
-  HostListener,
-  ChangeDetectionStrategy,
   OnInit,
-  AfterContentInit
+  ViewChild
 } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { ChanceService } from '@app/shared/services/chanceService/chance.service';
 import { TimerService } from '@app/shared/services/timer/timer.service';
 import { TurnTimer } from '@app/shared/services/timer/turn-timer';
+import { Point } from '@app/shared/models/point';
 
 @Component({
   selector: 'app-game-of-life',
@@ -23,36 +24,35 @@ import { TurnTimer } from '@app/shared/services/timer/turn-timer';
 export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy {
   turnTimer: TurnTimer;
 
-  @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
+  persistentCounter = new BehaviorSubject<number>(0);
 
-  @Input() public numberOfTiles = 100;
-  @Input() public speedInMilliseconds = 100;
-  @Input() public aliveStartPercentage = 10;
+  @Input() numberOfTiles = 250;
+  @Input() speedInMilliseconds = 20;
+  @Input() aliveStartPercentage = 25;
+
+  @ViewChild('gameOfLifeCanvas') canvas: ElementRef;
 
   private screenHeight: number;
   private screenWidth: number;
   private cellSize: number;
   private currentState: number[][];
-  private nextState: number[][];
-  private context: CanvasRenderingContext2D;
+  private canvasContext: CanvasRenderingContext2D;
   private timerSubscription: Subscription;
+  private counterSubscription: Subscription;
 
-  constructor(private chanceService: ChanceService, timerService: TimerService) {
-    this.turnTimer = timerService.getTimer(50, 0);
-    this.onResize();
-    this.calculateCellSize();
-    this.currentState = this.initialiseStateArray();
+  constructor(private chanceService: ChanceService, private timerService: TimerService) {
+    this.turnTimer = timerService.getTimer(this.speedInMilliseconds);
+    this.currentState = this.create2DArray(this.numberOfTiles);
   }
 
   @HostListener('window:resize', ['$event'])
-  onResize(_?: Event) {
-    this.screenHeight = window.innerHeight - 80;
-    this.screenWidth = window.innerWidth;
+  onResize() {
+    this.setupGame();
   }
 
   ngOnInit(): void {
-    this.setupCanvas();
-    this.timerSubscription = this.turnTimer.timer$.subscribe(_ => this.updateState());
+    this.setupGame();
+    this.setupTimerSubscription();
   }
 
   ngAfterContentInit(): void {
@@ -61,16 +61,15 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   ngOnDestroy(): void {
     this.timerSubscription.unsubscribe();
+    this.counterSubscription.unsubscribe();
   }
 
   start() {
-    if (!this.turnTimer.isRunning) {
-      this.turnTimer.resume();
-    }
+    this.turnTimer.resume();
   }
 
   togglePause() {
-    if (this.turnTimer.isRunning) {
+    if (this.turnTimer.getIsRunning()) {
       this.turnTimer.pause();
     } else {
       this.turnTimer.resume();
@@ -79,116 +78,182 @@ export class GameOfLifeComponent implements OnInit, AfterContentInit, OnDestroy 
 
   resetGame() {
     this.turnTimer.reset();
+    this.setupCanvas();
+    this.calculateCellSize();
+
+    this.currentState = this.create2DArray(this.numberOfTiles);
     this.populateGridRandom();
+  }
+
+  changeSpeed() {
+    this.timerSubscription.unsubscribe();
+    this.turnTimer = this.timerService.getTimer(
+      this.speedInMilliseconds,
+      this.turnTimer.getCurrentCounter(),
+      this.turnTimer.getIsRunning()
+    );
+    this.setupTimerSubscription();
+  }
+
+  private setupGame() {
+    this.resolveScreenSize();
+    this.calculateCellSize();
+    this.setupCanvas();
+    this.setGameFromCurrentState();
+  }
+
+  private create2DArray(length: number): number[][] {
+    return new Array(length).fill(0).map(() => new Array(length).fill(0));
+  }
+
+  private resolveScreenSize() {
+    this.screenHeight = window.innerHeight - 100;
+    this.screenWidth = window.innerWidth - 100;
+  }
+
+  private setupTimerSubscription() {
+    this.timerSubscription = this.turnTimer.timer$.subscribe(() => {
+      this.updateState();
+    });
+    this.counterSubscription = this.turnTimer.timerCounter$.subscribe(count => {
+      this.persistentCounter.next(count);
+    });
   }
 
   private calculateCellSize() {
     this.cellSize = this.getMinScreenDimension() / this.numberOfTiles;
   }
 
-  private initialiseStateArray() {
-    const board = Array();
-    for (let i = 0; i < this.numberOfTiles; i++) {
-      board[i] = Array();
-    }
-    return board;
-  }
-
   private setupCanvas() {
-    this.context = this.canvas.nativeElement.getContext('2d');
-    this.context.canvas.height = this.getMinScreenDimension();
-    this.context.canvas.width = this.getMinScreenDimension();
+    this.canvasContext = this.canvas.nativeElement.getContext('2d');
+    const minScreenDimension = this.getMinScreenDimension();
+    this.canvasContext.canvas.height = minScreenDimension;
+    this.canvasContext.canvas.width = minScreenDimension;
+    this.setupCanvasEventListeners();
   }
 
-  private getMinScreenDimension() {
-    return Math.min(this.screenHeight, this.screenWidth);
+  private setupCanvasEventListeners() {
+    this.canvasContext.canvas.addEventListener('mousedown', mouseEvent => {
+      mouseEvent.preventDefault();
+    });
+    this.canvasContext.canvas.addEventListener('click', mouseEvent => {
+      this.calculateCellFromPixel(mouseEvent);
+    });
+  }
+
+  private calculateCellFromPixel(mouseEvent: MouseEvent) {
+    const canvasBounds = this.canvasContext.canvas.getBoundingClientRect();
+    const mouseEventCellPoint = new Point(
+      Math.floor((mouseEvent.clientX - canvasBounds.left) / this.cellSize),
+      Math.floor((mouseEvent.clientY - canvasBounds.top) / this.cellSize)
+    );
+    this.toggleCellManual(mouseEventCellPoint);
+  }
+
+  private toggleCellManual(cellPoint: Point) {
+    if (this.getCurrentStateAtPoint(cellPoint) === 1) {
+      this.killCell(cellPoint);
+      this.currentState[cellPoint.x][cellPoint.y] = 0;
+    } else {
+      this.populateCell(cellPoint);
+      this.currentState[cellPoint.x][cellPoint.y] = 1;
+    }
   }
 
   private populateGridRandom() {
-    for (let i = 0; i < this.numberOfTiles; i++) {
-      for (let j = 0; j < this.numberOfTiles; j++) {
-        this.currentState[i][j] = this.getOneOrZero();
-      }
-    }
-    this.setDisplayFromCurrentState();
-  }
-
-  private getOneOrZero() {
-    const deadStartWeight = (100 - this.aliveStartPercentage) / this.aliveStartPercentage;
-    const values = Array<number>(0, 1);
-    const weights = Array<number>(deadStartWeight, 1);
-    return this.chanceService.getWeightedRandom(values, weights);
-  }
-
-  private updateState() {
-    this.nextState = this.currentState;
-    for (let i = 0; i < this.numberOfTiles; i++) {
-      for (let j = 0; j < this.numberOfTiles; j++) {
-        this.findNextStateWithRules(i, j);
-      }
-    }
-    this.currentState = this.nextState;
-    this.setDisplayFromCurrentState();
-  }
-
-  private findNextStateWithRules(xPos: number, yPos: number) {
-    const isAlive = this.currentState[xPos][yPos] === 1;
-    const currentAmountOfNeighbours = this.getAmountOfNeighbours(xPos, yPos);
-    const shouldDieDueToUnderPopulation = currentAmountOfNeighbours <= 1;
-    const shouldDieDueToOverPopulation = currentAmountOfNeighbours >= 4;
-    const shouldBecomeLive = currentAmountOfNeighbours === 3;
-    if (isAlive) {
-      if (shouldDieDueToUnderPopulation || shouldDieDueToOverPopulation) {
-        this.nextState[xPos][yPos] = 0;
-      }
-    } else {
-      if (shouldBecomeLive) {
-        this.nextState[xPos][yPos] = 1;
-      }
-    }
-  }
-
-  private setDisplayFromCurrentState() {
-    for (let i = 0; i < this.numberOfTiles; i++) {
-      for (let j = 0; j < this.numberOfTiles; j++) {
-        if (this.currentState[i][j] === 1) {
-          this.setCellToBlack(i, j);
-        } else {
-          this.clearCell(i, j);
+    this.clearCanvas();
+    for (let x = 0; x < this.numberOfTiles; x++) {
+      for (let y = 0; y < this.numberOfTiles; y++) {
+        const cellPoint = new Point(x, y);
+        this.currentState[cellPoint.x][cellPoint.y] = this.getOneOrZero();
+        if (this.getCurrentStateAtPoint(cellPoint) === 1) {
+          this.populateCell(cellPoint);
         }
       }
     }
   }
 
-  private setCellToBlack(i: number, j: number) {
-    const cellXPos = i * this.cellSize;
-    const cellYPos = j * this.cellSize;
-    this.clearCell(cellXPos, cellYPos);
-    this.context.fillRect(cellXPos, cellYPos, this.cellSize, this.cellSize);
+  private getOneOrZero() {
+    const deadStartWeight = (100 - this.aliveStartPercentage) / this.aliveStartPercentage;
+    const values = [0, 1];
+    const weights = [deadStartWeight, 1];
+    return this.chanceService.getWeightedRandom(values, weights);
   }
 
-  private clearCell(i: number, j: number) {
-    const cellXPos = i * this.cellSize;
-    const cellYPos = j * this.cellSize;
-    this.context.clearRect(cellXPos, cellYPos, this.cellSize, this.cellSize);
+  private updateState() {
+    this.clearCanvas();
+    const nextState = this.create2DArray(this.numberOfTiles);
+    for (let x = 0; x < this.numberOfTiles; x++) {
+      for (let y = 0; y < this.numberOfTiles; y++) {
+        const cellPoint = new Point(x, y);
+        if (this.findNextStateWithRules(cellPoint) === 1) {
+          this.populateCell(cellPoint);
+          nextState[x][y] = 1;
+        }
+      }
+    }
+    this.currentState = nextState;
   }
 
-  private getAmountOfNeighbours(x: number, y: number) {
+  private setGameFromCurrentState() {
+    this.clearCanvas();
+    for (let x = 0; x < this.numberOfTiles; x++) {
+      for (let y = 0; y < this.numberOfTiles; y++) {
+        const cellPoint = new Point(x, y);
+        if (this.getCurrentStateAtPoint(cellPoint)) {
+          this.populateCell(cellPoint);
+        }
+      }
+    }
+  }
+
+  private findNextStateWithRules(cellPoint: Point): number {
+    if (this.getCurrentStateAtPoint(cellPoint) === 1) {
+      return this.getAmountOfNeighbours(cellPoint) <= 1 || this.getAmountOfNeighbours(cellPoint) >= 4 ? 0 : 1;
+    } else {
+      return this.getAmountOfNeighbours(cellPoint) === 3 ? 1 : 0;
+    }
+  }
+
+  private getCurrentStateAtPoint(cellPoint: Point): number {
+    return this.currentState[cellPoint.x][cellPoint.y];
+  }
+
+  private clearCanvas() {
+    this.canvasContext.fillRect(0, 0, this.getMinScreenDimension(), this.getMinScreenDimension());
+  }
+
+  private getMinScreenDimension(): number {
+    return Math.min(this.screenHeight, this.screenWidth);
+  }
+
+  private populateCell(cellPoint: Point) {
+    const cellXPos = cellPoint.x * this.cellSize;
+    const cellYPos = cellPoint.y * this.cellSize;
+    this.canvasContext.clearRect(cellXPos, cellYPos, this.cellSize, this.cellSize);
+  }
+
+  private killCell(cellPoint: Point) {
+    const cellXPos = cellPoint.x * this.cellSize;
+    const cellYPos = cellPoint.y * this.cellSize;
+    this.canvasContext.fillRect(cellXPos, cellYPos, this.cellSize, this.cellSize);
+  }
+
+  private getAmountOfNeighbours(cellPoint: Point) {
     let amount = 0;
-    for (let i = -1; i <= 1; i++) {
-      for (let j = -1; j <= 1; j++) {
-        const posX = x + i;
-        const posY = y + j;
-        const isSelf = i === 0 && j === 0;
-        if (this.isWithinSimulationRange(posX, posY) && !isSelf) {
-          amount += this.currentState[posX][posY];
+    for (let relativeX = -1; relativeX <= 1; relativeX++) {
+      for (let relativeY = -1; relativeY <= 1; relativeY++) {
+        const isSelf = relativeX === 0 && relativeY === 0;
+        const cellPointToCheck = new Point(cellPoint.x + relativeX, cellPoint.y + relativeY);
+        if (this.isWithinSimulationRange(cellPointToCheck) && !isSelf) {
+          amount += this.currentState[cellPointToCheck.x][cellPointToCheck.y];
         }
       }
     }
     return amount;
   }
 
-  private isWithinSimulationRange(posX: number, posY: number) {
-    return posX >= 0 && posX < this.numberOfTiles && posY >= 0 && posY < this.numberOfTiles;
+  private isWithinSimulationRange(cellPoint: Point) {
+    return cellPoint.x >= 0 && cellPoint.x < this.numberOfTiles && cellPoint.y >= 0 && cellPoint.y < this.numberOfTiles;
   }
 }

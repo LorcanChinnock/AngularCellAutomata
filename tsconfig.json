@@ -16,6 +16,7 @@
     "paths": {
       "@app/*": ["app/*"],
       "@env/*": ["environments/*"]
-    }
+    },
+    "plugins": [{ "name": "@angular/language-service" }]
   }
 }
