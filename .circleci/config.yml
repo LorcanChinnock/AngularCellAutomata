@@ -33,7 +33,7 @@ jobs:
             - 'node_modules'
       - run:
           name: Generate Build
-          command: ng build --prod --base-href "https://lorcanchinnock.github.io/AngularCellAutomata/"
+          command: xvfb-run -a npm run buildForGhPages
       - run:
           command: |
             npx ngh --repo=https://$GH_TOKEN@github.com/LorcanChinnock/AngularCellAutomata.git --name="Lorcan Chinnock" --email=ljchinnock@gmail.com
