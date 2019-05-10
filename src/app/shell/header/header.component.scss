@@ -2,6 +2,11 @@
 
 .navbar {
   margin-bottom: $spacer;
+  a {
+    img {
+      margin-right: 10px;
+    }
+  }
 }
 
 .nav-link.dropdown-toggle {
