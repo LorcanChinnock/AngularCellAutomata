@@ -3,7 +3,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
-import { CoreModule } from '@app/core';
+import { CoreModule } from 'app/core';
 
 import { ShellComponent } from './shell.component';
 import { HeaderComponent } from './header/header.component';
