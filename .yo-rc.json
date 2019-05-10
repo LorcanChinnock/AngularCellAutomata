@@ -11,7 +11,7 @@
       "lazy": true,
       "angulartics": false,
       "prettier": true,
-      "projectName": "test-angular",
+      "projectName": "cellular-automata",
       "packageManager": "npm",
       "mobile": []
     }

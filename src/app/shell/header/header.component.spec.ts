@@ -3,7 +3,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
 
-import { I18nService } from '@app/core';
+import { I18nService } from 'app/core';
 import { HeaderComponent } from './header.component';
 
 describe('HeaderComponent', () => {
