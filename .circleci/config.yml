@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  test:
     working_directory: ~/my-project
     docker:
       - image: circleci/node:8-browsers
@@ -15,7 +15,7 @@ jobs:
             - 'node_modules'
       - run: xvfb-run -a npm run test:ci
       - run: xvfb-run -a npm run e2e --config=protractor-ci.conf.js
-  deployGithubPage:
+  build_and_deploy:
     working_directory: ~/my-project
     docker:
       - image: circleci/node:8-browsers
@@ -41,10 +41,10 @@ workflows:
   version: 2
   build_and_deploy:
     jobs:
-      - build
-      - deployGithubPage:
+      - test
+      - build_and_deploy:
           requires:
-            - build
+            - test
           filters:
             branches:
               only: master
