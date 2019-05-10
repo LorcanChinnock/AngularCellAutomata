@@ -5,12 +5,14 @@ import { HttpClientModule } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
-import { CoreModule } from '@app/core';
-import { SharedModule } from '@app/shared';
+import { CoreModule } from 'app/core';
+import { SharedModule } from 'app/shared';
 import { ShellModule } from './shell/shell.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { GameOfLifeModule } from './game-of-life/game-of-life.module';
+import { ServiceWorkerModule } from '@angular/service-worker';
+import { environment } from '../environments/environment';
 
 @NgModule({
   imports: [
@@ -23,7 +25,8 @@ import { GameOfLifeModule } from './game-of-life/game-of-life.module';
     SharedModule,
     ShellModule,
     GameOfLifeModule,
-    AppRoutingModule // must be imported as the last module as it contains the fallback route
+    AppRoutingModule,
+    ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production }) // must be imported as the last module as it contains the fallback route
   ],
   declarations: [AppComponent],
   providers: [],

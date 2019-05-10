@@ -10,10 +10,10 @@ import {
   ViewChild
 } from '@angular/core';
 import { BehaviorSubject, Subscription } from 'rxjs';
-import { ChanceService } from '@app/shared/services/chanceService/chance.service';
-import { TimerService } from '@app/shared/services/timer/timer.service';
-import { TurnTimer } from '@app/shared/services/timer/turn-timer';
-import { Point } from '@app/shared/models/point';
+import { ChanceService } from 'app/shared/services/chanceService/chance.service';
+import { TimerService } from 'app/shared/services/timer/timer.service';
+import { TurnTimer } from 'app/shared/services/timer/turn-timer';
+import { Point } from 'app/shared/models/point';
 
 @Component({
   selector: 'app-game-of-life',

@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "test-angular": {
+    "cellular-automata": {
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
@@ -22,7 +22,13 @@
             "main": "src/main.ts",
             "tsConfig": "src/tsconfig.app.json",
             "polyfills": "src/polyfills.ts",
-            "assets": ["src/favicon.ico", "src/apple-touch-icon.png", "src/robots.txt", "src/assets"],
+            "assets": [
+              "src/favicon.ico",
+              "src/apple-touch-icon.png",
+              "src/robots.txt",
+              "src/assets",
+              "src/manifest.webmanifest"
+            ],
             "styles": ["src/main.scss"],
             "scripts": []
           },
@@ -42,7 +48,8 @@
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.prod.ts"
                 }
-              ]
+              ],
+              "serviceWorker": true
             }
           }
         },
@@ -72,7 +79,13 @@
             "tsConfig": "src/tsconfig.spec.json",
             "scripts": [],
             "styles": ["src/main.scss"],
-            "assets": ["src/favicon.ico", "src/apple-touch-icon.png", "src/robots.txt", "src/assets"]
+            "assets": [
+              "src/favicon.ico",
+              "src/apple-touch-icon.png",
+              "src/robots.txt",
+              "src/assets",
+              "src/manifest.webmanifest"
+            ]
           }
         },
         "lint": {
@@ -84,7 +97,7 @@
         }
       }
     },
-    "test-angular-e2e": {
+    "cellular-automata-e2e": {
       "root": "e2e",
       "projectType": "application",
       "architect": {
@@ -105,5 +118,5 @@
       }
     }
   },
-  "defaultProject": "test-angular"
+  "defaultProject": "cellular-automata"
 }
