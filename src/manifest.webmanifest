@@ -1,6 +1,6 @@
 {
-  "name": "cellular-automata",
-  "short_name": "cellular-automata",
+  "name": "Cellular Automata",
+  "short_name": "Cell Auto",
   "theme_color": "#1976d2",
   "background_color": "#fafafa",
   "display": "standalone",
