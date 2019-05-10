@@ -1,0 +1,76 @@
+{
+  "configVersion": 1,
+  "timestamp": 1557495827280,
+  "index": "https://lorcanchinnock.github.io/AngularCellAutomata/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "urls": [
+        "https://lorcanchinnock.github.io/AngularCellAutomata/4.33a880a125f15f011289.js",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/favicon.ico",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/index.html",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/main.986392c05d5d82e15f7c.js",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/polyfills.730dc69905063a52f50d.js",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/runtime.d848ec67dda0d5372a4b.js",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/styles.b5be44db049fb18b424f.css"
+      ],
+      "patterns": []
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "urls": [
+        "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-128x128.png",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-144x144.png",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-152x152.png",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-192x192.png",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-32x32.png",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-384x384.png",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-512x512.png",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-72x72.png",
+        "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-96x96.png"
+      ],
+      "patterns": []
+    }
+  ],
+  "dataGroups": [],
+  "hashTable": {
+    "https://lorcanchinnock.github.io/AngularCellAutomata/4.33a880a125f15f011289.js": "f86c70fe768aa12671823f8c1a0eb59efd112283",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-128x128.png": "37e79a13f031105deab64b81e06dd3c2d12e5a22",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-144x144.png": "7a22f2f2b480b3eb77f12743de121537ebf0856a",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-152x152.png": "18c8f84eef60e8ca6b4e69ef692c1609a51d05e5",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-192x192.png": "5c597c88712b255fbe7e442892615e9652da1087",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-32x32.png": "c41b81cad4888b1b78df707f35fef1142c5524dd",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-384x384.png": "9eb55369c6ffa6679cf7f04c41347788746d794b",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-512x512.png": "b503f6f554ad8f29f787bad921c82b1e59cd6067",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-72x72.png": "076bdc8d278e479b242e91e7bb9e6edc9cefedf7",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/assets/icons/icon-96x96.png": "5103b7fef50f745441773dce998af420f76f9428",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/favicon.ico": "48421064964a73e574f301683354e4ba28b8e283",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/index.html": "27850c7314428a10413055a5891cc0982db6a295",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/main.986392c05d5d82e15f7c.js": "1092c937d3d3d65f525c6b4a2e5669324757fd85",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/polyfills.730dc69905063a52f50d.js": "ce68d153e9b9b6d26b625069c0ee99ae09c6f255",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/runtime.d848ec67dda0d5372a4b.js": "6ac929e1568a896430c028627e5fc28385c140e4",
+    "https://lorcanchinnock.github.io/AngularCellAutomata/styles.b5be44db049fb18b424f.css": "30fff7c520c31484285b9a29920e65eb6f453e03"
+  },
+  "navigationUrls": [
+    {
+      "positive": true,
+      "regex": "^\\/.*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*\\.[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
+    }
+  ]
+}
